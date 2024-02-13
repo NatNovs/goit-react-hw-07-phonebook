@@ -1,47 +1,80 @@
 import React, { useState } from 'react';
-import { Input, Button } from './ContactForm.styled';
+import css from './ContactForm.module.css';
 import { useDispatch, useSelector } from 'react-redux';
-import { addContactThunk } from 'store/contactsThunk';
+import { addContact } from '../../redux/operations';
+import { selectContacts } from '../../redux/contacts/selectors';
 
 export const ContactForm = () => {
-  const [name, setName] = useState('');
-  const [number, setNumber] = useState('');
-
-  const contacts = useSelector(state => state.contacts.contacts.items);
-
   const dispatch = useDispatch();
+  const contacts = useSelector(selectContacts);
+  const [name, setName] = useState('');
+  const [phone, setNumber] = useState('');
 
-  const handlerChangeName = e => {
-    setName(e.target.value);
-  };
-  const handlerChangePhone = e => {
-    setNumber(e.target.value);
-  };
+  const handleChange = e => {
+    const { name, value } = e.currentTarget;
 
-  const handleSubmit = e => {
-    e.preventDefault();
-    let isExists = contacts.some(el => el.name === name);
+    switch (name) {
+      case 'name':
+        setName(value);
+        break;
 
-    const newContact = {
-      name,
-      phone: number,
-    };
-    if (isExists) {
-      alert(`${name} is already in contacts`);
-    } else {
-      dispatch(addContactThunk(newContact));
-      setName('');
-      setNumber('');
+      case 'phone':
+        setNumber(value);
+        break;
+
+      default:
+        console.warn(`There is no input with name: ${name}`);
     }
   };
 
+  const handleAddContact = evt => {
+    evt.preventDefault();
+
+    const contactData = { name, phone };
+
+    const alreadyExist = contacts.some(
+      contact => contact.name.toLowerCase() === contactData.name.toLowerCase()
+    );
+
+    if (alreadyExist) {
+      alert(`${contactData.name} is already in contacts.`);
+      return;
+    }
+    dispatch(addContact(contactData));
+
+    setName('');
+    setNumber('');
+  };
+
   return (
-    <form onSubmit={handleSubmit}>
-      <label htmlFor="name">Name</label>
-      <Input id="name" onChange={handlerChangeName} type="text" name="name" value={name} required />
-      <label htmlFor="phone">Phone</label>
-      <Input id="phone" onChange={handlerChangePhone} type="tel" name="number" value={number} required />
-      <Button type="submit">Add contact</Button>
+    <form className={css.form} onSubmit={handleAddContact}>
+      <label>
+        Enter your name:
+        <input
+          onChange={handleChange}
+          type="text"
+          name="name"
+          autoComplete="on"
+          value={name}
+          required
+        />
+      </label>
+
+      <label>
+        Enter your number:
+        <input
+          onChange={handleChange}
+          type="tel"
+          name="phone"
+          autoComplete="on"
+          value={phone}
+          required
+        />
+      </label>
+
+      <button className={css.button} type="submit">
+        Add contact
+      </button>
     </form>
   );
 };
